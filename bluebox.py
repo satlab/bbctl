@@ -110,8 +110,8 @@ class Bluebox(object):
 	SW_TOLERANCE_3BER	= 3
 
 	# Data length and format
-	DATALEN 		= 501
-	DATAEPSIZE		= 512
+	DATALEN 		= 289
+	DATAEPSIZE		= 300
 	DATAFMT			= "<HHhhBH{0}s".format(DATALEN)
 
 	def find_bluebox(self, index=None, serial=None):
