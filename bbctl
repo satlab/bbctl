@@ -475,15 +475,16 @@ def help(args, parser):
 def list(args):
 	index = 0
 
-	fields = "{0}: BlueBox #{1:08x} (USB path {2:<03}:{3:<03})\n" + \
+	fields = "{0}: {12} (USB path {2:<03}:{3:<03})\n" + \
+		 "   Serial:    {1:08x}\n" + \
+		 "   Firmware:  {11}\n" + \
 		 "   Frequency: {4} Hz\n" + \
 		 "   Modindex:  {5}\n" + \
 		 "   Bitrate:   {6} bps\n" + \
 		 "   Power:     {7}\n" + \
 		 "   Training:  {8} ms\n" + \
 		 "   Transmit:  {9}\n" + \
-		 "   Received:  {10}\n" + \
-		 "   Firmware:  {11}"
+		 "   Received:  {10}"
 
 	while True:
 		try:
@@ -502,7 +503,8 @@ def list(args):
 				bb.get_training(),
 				bb.get_transmitted(),
 				bb.get_received(),
-				bb.get_fwrevision()))
+				bb.get_fwrevision(),
+				bb.product))
 		except Exception as e:
 			if index == 0:
 				print("Error: no BlueBox found")
