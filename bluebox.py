@@ -310,7 +310,7 @@ class Bluebox(object):
 
 		time.sleep(1)
 
-		self.dev = usb.core.find(idVendor=self.ATMEL_VENDOR, idProduct=self.ATMEL_PRODUCT)
+		self.dev = usb.core.find(idVendor=self.ATMEL_VENDOR)
 		if self.dev is None:
 			raise Exception("Failed to set device in DFU mode")
 
