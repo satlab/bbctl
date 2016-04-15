@@ -354,7 +354,7 @@ class Bluebox(object):
         if not timeout:
             timeout = self.timeout
         try:
-            ret = self.dev.read(self.DATA_IN, self.DATAEPSIZE, 0, timeout=timeout)
+            ret = self.dev.read(self.DATA_IN, self.DATAEPSIZE, timeout=timeout)
             size, progress, rssi, freq, flags, training, data = struct.unpack(self.DATAFMT, ret)
             data = data[0:size]
         except KeyboardInterrupt:
