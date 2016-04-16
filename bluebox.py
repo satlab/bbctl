@@ -218,11 +218,20 @@ class Bluebox(object):
         br = struct.unpack("<H", br)[0]
         return br
 
-    def ifbw(self, ifbw):
+    def set_ifbw(self, ifbw):
         pass
 
-    def syncword(self, word, tol):
+    def get_ifbw(self):
         pass
+
+    def set_syncword(self, sw):
+        sw = struct.pack("<I", sw)
+        self._ctrl_write(self.REQUEST_SYNCWORD, sw)
+
+    def get_syncword(self):
+        sw = self._ctrl_read(self.REQUEST_SYNCWORD, 4)
+        sw = struct.unpack("<I", sw)[0]
+        return sw
 
     def set_power(self, power):
         power = struct.pack("<B", power)

@@ -417,6 +417,13 @@ def csma(args, bb):
     else:
         print(bb.get_csma())
 
+@subcommand("get or set device sync word")
+@argument('syncword', type=int, help="sync word. Only ", nargs="?", default=None)
+def syncword(args, bb):
+    if args.syncword is not None:
+        bb.set_syncword(args.syncword)
+    else:
+        print("{:06x}".format(bb.get_syncword()))
 
 @subcommand("enable or disable AFC")
 @argument("state", help="on/off", type=parse_state, nargs="?", default=None)
