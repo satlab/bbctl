@@ -365,7 +365,7 @@ class Bluebox(object):
         try:
             ret = self.dev.read(self.DATA_IN, self.DATAEPSIZE, timeout=timeout)
             size, progress, rssi, freq, flags, training, data = struct.unpack(self.DATAFMT, ret)
-            data = data[0:size]
+            data = bytes(data)[0:size]
         except KeyboardInterrupt:
             raise
         except:

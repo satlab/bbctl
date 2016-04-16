@@ -92,7 +92,7 @@ class PacketHandler():
 
         self.vp = bbfec.create_viterbi(MAX_FEC_LENGTH * BITS_PER_BYTE)
 
-        self.key = hashlib.sha1(key).digest()[:HMAC_KEY_LENGTH] if key else None
+        self.key = hashlib.sha1(codecs.encode(key, "ascii")).digest()[:HMAC_KEY_LENGTH] if key else None
         self.viterbi = viterbi
         self.rs = rs
         self.randomize = randomize
@@ -106,7 +106,7 @@ class PacketHandler():
         result = ""
         while src:
             s, src = src[:length], src[length:]
-            hexa = ' '.join(["{0:02X}".format(ord(x)) for x in s])
+            hexa = ' '.join(["{0:02X}".format(x) for x in s])
             s = s.translate(filt)
             result += "{0:08X}   {1:{width}}   {2}\n".format(offset, hexa, s, width=length * 3)
             offset += length
@@ -133,7 +133,7 @@ class PacketHandler():
         return data[:CSP_OVERHEAD + size]
 
     def decode(self, data):
-        rx_length = len(data)
+        rx_length = int(len(data))
         data_mutable = ctypes.create_string_buffer(data)
         bit_corr = 0
         byte_corr = 0
@@ -141,15 +141,15 @@ class PacketHandler():
         if self.viterbi:
             rx_length = (rx_length / VITERBI_RATE) - VITERBI_TAIL
             bbfec.init_viterbi(self.vp, 0)
-            bbfec.update_viterbi(self.vp, data_mutable, (rx_length * BITS_PER_BYTE) + (VITERBI_CONSTRAINT - 1))
-            bit_corr = bbfec.chainback_viterbi(self.vp, data_mutable, (rx_length * BITS_PER_BYTE), 0)
+            bbfec.update_viterbi(self.vp, data_mutable, int((rx_length * BITS_PER_BYTE) + (VITERBI_CONSTRAINT - 1)))
+            bit_corr = bbfec.chainback_viterbi(self.vp, data_mutable, int(rx_length * BITS_PER_BYTE), int(0))
 
         if self.randomize:
-            bbfec.ccsds_xor_sequence(data_mutable, self.ccsds_sequence, rx_length)
+            bbfec.ccsds_xor_sequence(data_mutable, self.ccsds_sequence, int(rx_length))
 
         if self.rs:
             pad = RS_BLOCK_LENGTH - RS_LENGTH - (rx_length - RS_LENGTH)
-            byte_corr = bbfec.decode_rs(data_mutable, None, 0, pad)
+            byte_corr = bbfec.decode_rs(data_mutable, None, 0, int(pad))
             rx_length = rx_length - RS_LENGTH
             if byte_corr == -1:
                 raise Exception("Reed-Solomon decoding error")
