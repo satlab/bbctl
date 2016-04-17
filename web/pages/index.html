@@ -10,12 +10,66 @@
 
     <body>
         <div class="container">
-            <div class="header clearfix">
-                <h3 class="text-muted">Satlab BlueBox</h3>
+            <header class="header clearfix">
+                <h3 class="text-primary pull-left">Satlab BlueBox</h3>
+                <p class="text-muted pull-right" id="bbinfo"></p>
+            </header>
+
+            <div class="tracking">
+                <h3 class="sub-header">Tracking</h3>
+
+                <table class="table table-condensed">
+                    <tr><td>Spacecraft:</td><td id="spacecraft"/></tr>
+                    <tr><td>In range:</td><td id="inrange"/></p>
+                    <tr><td>Next pass:</td><td id="pass"/></p>
+                    <tr><td>Frequency:</td><td id="freq"/></p>
+                    <tr><td>Azimuth:</td><td id="az"/></p>
+                    <tr><td>Elevation:</td><td id="el"/></p>
+                    <tr><td>Slant range:</td><td id="slantrange"/></p>
+                </table>
+
             </div>
 
-            <span class="glyphicon glyphicon-signal" aria-hidden="true"></span>
-            <span id="rssi"></span>
+            <div class="beacon">
+                <h3 class="sub-header">Beacon</h3>
+
+                <span class="glyphicon glyphicon-signal" aria-hidden="true"></span>
+                <span id="rssi"></span>
+            </div>
+
+            <div class="frames">
+                <h3 class="sub-header">Frames</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Number</th>
+                                <th>RSSI</th>
+                                    <th>Frequency offset</th>
+                                <th>Bit/Byte Errors</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0</td>
+                                <td>-47 dBm</td>
+                                <td>100 Hz</td>
+                                <td>0/3</td>
+                            </tr>
+                            <tr>
+                                <td>1</td>
+                                <td>-87 dBm</td>
+                                <td>120 Hz</td>
+                                <td>12/3</td>
+                            </tr>
+                        </tbody>
+                        </table>
+                </div>
+            </div>
+
+            <footer class="footer">
+                <p>&copy; 2016 Satlab ApS - Released under the MIT license</p>
+            </footer>
         </div>
 
         <script src="js/jquery.min.js"></script>

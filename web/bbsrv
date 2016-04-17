@@ -23,16 +23,35 @@
 from __future__ import print_function, division
 
 import sys
+import math
+import threading
 import argparse
+import datetime
+import time
+
 import bottle
+import ephem
 
 sys.path.append('..')
 import bluebox
 
 # AJAX calls
-@bottle.route('/rssi')
-def rssi():
+@bottle.route('/bb/rssi')
+def bb_rssi():
     return {'rssi': bb.rssi()}
+
+@bottle.route('/bb/info')
+def bb_info():
+    return {'manufacturer': bb.manufacturer,
+            'product': bb.product,
+            'bus': bb.dev.bus,
+            'address': bb.dev.address,
+            'serial': bb.get_serialnumber(),
+            'fwrevision': bb.get_fwrevision()}
+
+@bottle.route('/tracker')
+def passinfo():
+    return tracker.pass_info()
 
 # Default page
 @bottle.route('/')
@@ -54,22 +73,104 @@ def js(filename):
 def js(filename):
     return bottle.static_file(filename, root='fonts')
 
+# Background threads
+class Tracker(threading.Thread):
+    def __init__(self, bb, spacecraft, frequency):
+        # FIXME: add TLE downloader
+        tle = [
+            'GOMX 3                  ',
+            '1 40949U 98067HA  16107.23755429  .00071897  00000-0  52268-3 0  9996',
+            '2 40949  51.6377 353.5364 0003495  14.7147 345.3953 15.72684671 30294']
+
+        # Setup parameters
+        self.bb = bb
+        self.spacecraft = tle[0].strip()
+        self.frequency = frequency
+
+        # Setup observer
+        self.obs = ephem.Observer()
+        self.obs.lat = 57.0138 # FIXME
+        self.obs.long = 9.9875 # FIXME
+        self.obs.elevation = 0
+
+        # Setup spacecraft
+        self.sc = ephem.readtle(tle[0].strip(), tle[1], tle[2])
+
+        # Reset pass info
+
+
+        # Start thread
+        threading.Thread.__init__(self, None)
+        self.start()
+
+    def pass_info(self):
+        delta = ephem.localtime(self.tr) - datetime.datetime.now()
+        max_alt = math.degrees(self.altt)
+
+        return {'spacecraft': self.spacecraft,
+                'frequency': self.current_freq,
+                'az': round(math.degrees(self.sc.az), 2),
+                'elv': round(math.degrees(self.sc.alt), 2),
+                'range': self.sc.range,
+                'range_velocity': self.sc.range_velocity,
+                'next_pass_in': str(datetime.timedelta(delta.days, delta.seconds)),
+                'next_pass_length': str(ephem.localtime(self.ts) - ephem.localtime(self.tr)),
+                'next_pass_elv': round(max_alt, 2)}
+
+    def doppler_shift(self, frequency, velocity):
+        c = 299792458.0
+        return (-velocity * frequency) / c
+
+    def run(self):
+        while True:
+            # Find next pass
+            self.obs.date = ephem.now()
+            self.tr, self.azr, self.tt, self.altt, self.ts, self.azs = self.obs.next_pass(self.sc)
+
+            print("Next pass for {0} (Orbit {1})".format(self.spacecraft, self.sc._orbit))
+            print("AOS: {0}".format(ephem.localtime(self.tr).strftime("%Y-%m-%d %H:%M:%S")))
+            print("Transit: {0}".format(ephem.localtime(self.tt).strftime("%Y-%m-%d %H:%M:%S")))
+            print("LOS: {0}".format(ephem.localtime(self.ts).strftime("%Y-%m-%d %H:%M:%S")))
+            print("Pass length: {0}".format(ephem.localtime(self.ts) - ephem.localtime(self.tr)))
+            print("Maximum elevation: {0:.1f} degrees".format(math.degrees(self.altt)))
+
+            # Handle pass
+            self.obs.date = ephem.now()
+            while self.obs.date <= self.ts:
+                # Calculate spacecraft position
+                self.sc.compute(self.obs)
+
+                # Adjust radio frequency
+                self.current_freq = int(self.frequency + self.doppler_shift(self.frequency, self.sc.range_velocity))
+                self.bb.set_frequency(self.current_freq)
+
+                # Wait for next update
+                self.obs.date = ephem.Date(self.obs.date + 2 * ephem.second)
+                time.sleep(2)
+
 def main():
     # Parse optional arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("-p", metavar="<port>", dest="port", default=8080, type=int, help="port")
+    parser.add_argument("-p", metavar="<port>", dest="port", default=8080, type=int, help="webserver listen port")
+    parser.add_argument("-i", metavar="<index>", dest="index", default=None, type=int, help="select specific BlueBox device at index")
+    parser.add_argument("-s", metavar="<serial>", dest="serialnum", default=None, help="select specific BlueBox device with serial")
+    parser.add_argument("-t", metavar="<spacecraft>", dest="spacecraft", default="AAUSAT4", help="Spacecraft to track")
     args = parser.parse_args()
 
     # Connect to BlueBox
     try:
         global bb
-        bb = bluebox.Bluebox()
+        bb = bluebox.Bluebox(index=args.index, serial=args.serialnum)
     except Exception as e:
         print("Failed to connect to BlueBox: {0}".format(e))
         sys.exit(0)
 
+    # Start tracking thread
+    global tracker
+    tracker = Tracker(bb, args.spacecraft, 437425000)
+
     # Start server
-    bottle.run(host='localhost', port=args.port)
+    bottle.run(host='0.0.0.0', port=args.port, quiet=True)
 
 if __name__ == '__main__':
     main()
