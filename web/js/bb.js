@@ -7,7 +7,7 @@ var get_rssi = function () {
         }
     });
 
-    // rerun in 250 ms
+    // rerun in 1000 ms
     setTimeout(get_rssi, 1000);
 }
 
@@ -33,22 +33,27 @@ var get_tracking = function () {
         success: function(data) {
             $("#spacecraft").text(data.spacecraft);
             $("#freq").text((data.frequency/1e6).toFixed(6) + " MHz");
-            $("#pass").text(data.next_pass_in + " (" + data.next_pass_elv + "\xB0, " + data.next_pass_length + ")");
-            $("#az").text(data.az + "\xB0");
-            $("#el").text(data.elv + "\xB0");
-            $("#slantrange").text(data.range/1000 + " km");
+            $("#pass").text();
+            $("#az").text(data.az.toFixed(2) + "\xB0");
+            $("#el").text(data.elv.toFixed(2) + "\xB0");
+            $("#slantrange").text((data.range/1000).toFixed(2) + " km");
 
             in_range = data.elv > 0;
             if (in_range) {
-                $("#inrange").text("Yes").removeClass().addClass("text-success");
+                text = "<span class=\"text-success\"><b>In-range</b></span> - pass ends in " + 
+                    data.pass_ends;
             } else {
-                $("#inrange").text("No").removeClass().addClass("text-danger");
+                text = "<span class=\"text-danger\"><b>Not in-range</b></span> - next pass in " + 
+                    data.next_pass_in + " (" + 
+                    data.next_pass_elv + "\xB0, " + 
+                    data.next_pass_length + ")";
             }
+            $("#pass").html(text)
         }
     });
 
-    // rerun in 250 ms
-    setTimeout(get_tracking, 500);
+    // rerun in 1000 ms
+    setTimeout(get_tracking, 1000);
 }
 
 var main = function () {

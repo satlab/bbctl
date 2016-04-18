@@ -78,9 +78,9 @@ class Tracker(threading.Thread):
     def __init__(self, bb, spacecraft, frequency):
         # FIXME: add TLE downloader
         tle = [
-            'GOMX 3                  ',
-            '1 40949U 98067HA  16109.46125267  .00089582  00000-0  63732-3 0  9992',
-            '2 40949  51.6375 342.1369 0003309  17.4245 342.6866 15.73103740 30640']
+            'GOMX 1                  ',
+            '1 39430U 13066Q   16109.36557205  .00000570  00000-0  11404-3 0  9990',
+            '2 39430  97.6740 134.8460 0151329 304.7268  53.9764 14.58545748128007']
 
         # Setup parameters
         self.bb = bb
@@ -100,7 +100,8 @@ class Tracker(threading.Thread):
         self.start()
 
     def pass_info(self):
-        delta = ephem.localtime(self.tr) - datetime.datetime.now()
+        delta_start = ephem.localtime(self.tr) - datetime.datetime.now()
+        delta_end = ephem.localtime(self.ts) - datetime.datetime.now()
         max_alt = math.degrees(self.altt)
 
         return {'spacecraft': self.spacecraft,
@@ -109,7 +110,8 @@ class Tracker(threading.Thread):
                 'elv': round(math.degrees(self.sc.alt), 2),
                 'range': self.sc.range,
                 'range_velocity': self.sc.range_velocity,
-                'next_pass_in': str(datetime.timedelta(delta.days, delta.seconds)),
+                'pass_ends': str(datetime.timedelta(delta_end.days, delta_end.seconds)),
+                'next_pass_in': str(datetime.timedelta(delta_start.days, delta_start.seconds)),
                 'next_pass_length': str(ephem.localtime(self.ts) - ephem.localtime(self.tr)),
                 'next_pass_elv': round(max_alt, 2)}
 
@@ -123,13 +125,6 @@ class Tracker(threading.Thread):
             self.obs.date = ephem.now()
             self.tr, self.azr, self.tt, self.altt, self.ts, self.azs = self.obs.next_pass(self.sc)
 
-            print("Next pass for {0} (Orbit {1})".format(self.spacecraft, self.sc._orbit))
-            print("AOS: {0}".format(ephem.localtime(self.tr).strftime("%Y-%m-%d %H:%M:%S")))
-            print("Transit: {0}".format(ephem.localtime(self.tt).strftime("%Y-%m-%d %H:%M:%S")))
-            print("LOS: {0}".format(ephem.localtime(self.ts).strftime("%Y-%m-%d %H:%M:%S")))
-            print("Pass length: {0}".format(ephem.localtime(self.ts) - ephem.localtime(self.tr)))
-            print("Maximum elevation: {0:.1f} degrees".format(math.degrees(self.altt)))
-
             # Handle pass
             self.obs.date = ephem.now()
             while self.obs.date <= self.ts:
@@ -137,8 +132,10 @@ class Tracker(threading.Thread):
                 self.sc.compute(self.obs)
 
                 # Adjust radio frequency
-                self.current_freq = int(self.frequency + self.doppler_shift(self.frequency, self.sc.range_velocity))
-                self.bb.set_frequency(self.current_freq)
+                self.current_freq = self.frequency
+                if self.sc.alt >= 0.0:
+                    self.current_freq += self.doppler_shift(self.frequency, self.sc.range_velocity)
+                self.bb.set_frequency(int(self.current_freq))
 
                 # Wait for next update
                 self.obs.date = ephem.Date(self.obs.date + 2 * ephem.second)
@@ -148,6 +145,7 @@ def main():
     # Parse optional arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", metavar="<port>", dest="port", default=8080, type=int, help="webserver listen port")
+    parser.add_argument("-l", metavar="<host>", dest="host", default='localhost', help="webserver listen host")
     parser.add_argument("-i", metavar="<index>", dest="index", default=None, type=int, help="select specific BlueBox device at index")
     parser.add_argument("-s", metavar="<serial>", dest="serialnum", default=None, help="select specific BlueBox device with serial")
     parser.add_argument("-t", metavar="<spacecraft>", dest="spacecraft", default="AAUSAT4", help="Spacecraft to track")
@@ -166,7 +164,8 @@ def main():
     tracker = Tracker(bb, args.spacecraft, 437425000)
 
     # Start server
-    bottle.run(host='0.0.0.0', port=args.port, quiet=True)
+    print('Listening on http://{}:{}'.format(args.host, args.port))
+    bottle.run(host=args.host, port=args.port, quiet=True)
 
 if __name__ == '__main__':
     main()
