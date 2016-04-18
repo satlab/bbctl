@@ -79,8 +79,8 @@ class Tracker(threading.Thread):
         # FIXME: add TLE downloader
         tle = [
             'GOMX 3                  ',
-            '1 40949U 98067HA  16107.23755429  .00071897  00000-0  52268-3 0  9996',
-            '2 40949  51.6377 353.5364 0003495  14.7147 345.3953 15.72684671 30294']
+            '1 40949U 98067HA  16109.46125267  .00089582  00000-0  63732-3 0  9992',
+            '2 40949  51.6375 342.1369 0003309  17.4245 342.6866 15.73103740 30640']
 
         # Setup parameters
         self.bb = bb
@@ -89,15 +89,11 @@ class Tracker(threading.Thread):
 
         # Setup observer
         self.obs = ephem.Observer()
-        self.obs.lat = 57.0138 # FIXME
-        self.obs.long = 9.9875 # FIXME
-        self.obs.elevation = 0
+        self.obs.lat = '57.0138' # FIXME
+        self.obs.long = '9.9875' # FIXME
 
         # Setup spacecraft
-        self.sc = ephem.readtle(tle[0].strip(), tle[1], tle[2])
-
-        # Reset pass info
-
+        self.sc = ephem.readtle(tle[0], tle[1], tle[2])
 
         # Start thread
         threading.Thread.__init__(self, None)
