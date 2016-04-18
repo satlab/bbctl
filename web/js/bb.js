@@ -1,18 +1,5 @@
-var get_rssi = function () {
-    // request RSSI from bluebox
-    $.ajax({
-        url: '/bb/rssi',
-        success: function(data) {
-            $("#rssi").text(data.rssi + ' dBm');
-        }
-    });
-
-    // rerun in 1000 ms
-    setTimeout(get_rssi, 1000);
-}
-
-var get_bbinfo = function () {
-    // request info from bluebox
+var get_bbinfo = function ()
+{
     $.ajax({
             url: '/bb/info',
         success: function(data) {
@@ -26,8 +13,8 @@ var get_bbinfo = function () {
     });
 }
 
-var get_tracking = function () {
-    // request RSSI from bluebox
+var get_tracking = function ()
+{
     $.ajax({
         url: '/tracker',
         success: function(data) {
@@ -52,19 +39,45 @@ var get_tracking = function () {
         }
     });
 
-    // rerun in 1000 ms
     setTimeout(get_tracking, 1000);
 }
 
-var main = function () {
+next_packet = 0;
+var get_packets = function ()
+{
+    // request RSSI from bluebox
+    $.ajax({
+        url: '/packets/' + next_packet,
+        success: function(data) {
+            data.packets.forEach(function(entry) {
+                $("#wait-data").hide();
+                $("#packets tbody").prepend($(
+                    "<tr>" +
+                        "<td>" + entry.count + "</td>" +
+                        "<td>" + entry.time + "</td>" +
+                        "<td>" + entry.rssi + " dBm</td>" +
+                        "<td>" + entry.freq + " Hz</td>" +
+                        "<td>" + entry.bitcorr + "/" + entry.bytecorr + "</td>" +
+                    "</tr>").hide().fadeIn(500));
+
+                next_packet = entry.count + 1;
+            });
+        }
+    });
+
+    setTimeout(get_packets, 200);
+}
+
+var main = function ()
+{
     // get info
     get_bbinfo();
 
     // start tracking update
     get_tracking();
 
-    // start RSSI update
-    get_rssi();
+    // start data update
+    get_packets();
 }
 
 $(document).ready(main);

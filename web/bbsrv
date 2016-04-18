@@ -28,30 +28,33 @@ import threading
 import argparse
 import datetime
 import time
+import codecs
+import json
 
 import bottle
 import ephem
 
 sys.path.append('..')
 import bluebox
+import fec
 
 # AJAX calls
-@bottle.route('/bb/rssi')
-def bb_rssi():
-    return {'rssi': bb.rssi()}
-
 @bottle.route('/bb/info')
 def bb_info():
-    return {'manufacturer': bb.manufacturer,
-            'product': bb.product,
-            'bus': bb.dev.bus,
-            'address': bb.dev.address,
-            'serial': bb.get_serialnumber(),
-            'fwrevision': bb.get_fwrevision()}
+    return {'manufacturer': receiver.bb.manufacturer,
+            'product': receiver.bb.product,
+            'bus': receiver.bb.dev.bus,
+            'address': receiver.bb.dev.address,
+            'serial': receiver.bb.get_serialnumber(),
+            'fwrevision': receiver.bb.get_fwrevision()}
 
 @bottle.route('/tracker')
 def passinfo():
     return tracker.pass_info()
+
+@bottle.route('/packets/<start>')
+def packets(start):
+    return {'packets': receiver.packets(int(start))}
 
 # Default page
 @bottle.route('/')
@@ -74,6 +77,55 @@ def js(filename):
     return bottle.static_file(filename, root='fonts')
 
 # Background threads
+class Receiver(threading.Thread):
+    def __init__(self, bb, packetlog):
+        # Setup parameters
+        self.bb = bb
+        self.packetlog = open(packetlog, 'a')
+
+        # Packet list
+        self._packets = []
+
+        # Start thread
+        threading.Thread.__init__(self, None)
+        self.start()
+
+    def run(self):
+        count = 0
+        ph = fec.PacketHandler()
+
+        while True:
+            bit_corr = 0
+            byte_corr = 0
+            data, rssi, freq = self.bb.receive(100)
+            if data is None:
+                continue
+
+            try:
+                data, bit_corr, byte_corr = ph.deframe(data)
+            except:
+                byte_corr = -1
+
+            print("{0:03} {1:.2f} RX ({2:03d}/{3:03d}) {4:4} dBm {5:+5d} Hz ({6:03}) '{7}'".format(
+                count, time.time(), bit_corr, byte_corr, rssi, freq, len(data), codecs.encode(data, "hex")))
+
+            # Append to packet list
+            self._packets.append({
+                'count': count,
+                'time': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'rssi': rssi,
+                'freq': freq,
+                'bitcorr': bit_corr,
+                'bytecorr': byte_corr,
+                #'data': codecs.encode(data, "hex"),
+                'datalen': len(data)
+                })
+            count += 1
+
+    def packets(self, start):
+        # return packets from next, up to the last 10
+        return self._packets[start:][-10:]
+
 class Tracker(threading.Thread):
     def __init__(self, bb, spacecraft, frequency):
         # FIXME: add TLE downloader
@@ -153,11 +205,14 @@ def main():
 
     # Connect to BlueBox
     try:
-        global bb
         bb = bluebox.Bluebox(index=args.index, serial=args.serialnum)
     except Exception as e:
         print("Failed to connect to BlueBox: {0}".format(e))
         sys.exit(0)
+
+    # Start receiver thread
+    global receiver
+    receiver = Receiver(bb, 'packets.json')
 
     # Start tracking thread
     global tracker

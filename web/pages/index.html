@@ -38,47 +38,50 @@
                         <td class="col-md-1">Slant range:</td><td class="col-md-2" id="slantrange"/>
                     </tr>
                 </table>
-
             </div>
 
             <div class="beacon">
                 <h3 class="sub-header">Beacon</h3>
 
-                <span class="glyphicon glyphicon-signal" aria-hidden="true"></span>
-                <span id="rssi"></span>
+                <div class="valid">
+                    <h3 style="display: inline;"><span class="label label-success">EPS</span></h3>
+                    <h3 style="display: inline;"><span class="label label-success">COM</span></h3>
+                    <h3 style="display: inline;"><span class="label label-success">ADCS1</span></h3>
+                    <h3 style="display: inline;"><span class="label label-default">ADCS2</span></h3>
+                    <h3 style="display: inline;"><span class="label label-success">AIS</span></h3>
+                </div>
+
+                <table class="table table-condensed">
+                    <tr>
+                        <td class="col-md-1">Battery Voltage:</td><td class="col-md-2"/>
+                    </tr>
+                    <tr>
+                        <td class="col-md-1">Received Packets: </td><td class="col-md-2"/>
+                    </tr>
+                </table>
             </div>
 
             <div class="frames">
                 <h3 class="sub-header">Frames</h3>
                 <div class="table-responsive">
-                    <table class="table table-striped">
+                    <table id="packets" class="table table-striped">
                         <thead>
                             <tr>
-                                <th>Number</th>
-                                <th>RSSI</th>
-                                <th>Frequency offset</th>
-                                <th>Bit/Byte Errors</th>
+                                <th class="'col-md-1">Number</th>
+                                <th class="'col-md-1">Time</th>
+                                <th class="'col-md-1">RSSI</th>
+                                <th class="'col-md-1">Frequency offset</th>
+                                <th class="'col-md-1">Bit/Byte Errors</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>0</td>
-                                <td>-47 dBm</td>
-                                <td>100 Hz</td>
-                                <td>0/3</td>
-                            </tr>
-                            <tr>
-                                <td>1</td>
-                                <td>-87 dBm</td>
-                                <td>120 Hz</td>
-                                <td>12/3</td>
-                            </tr>
+                            <tr><td colspan=5 align="center" id="wait-data">Waiting for data</td></tr>
                         </tbody>
                         </table>
                 </div>
             </div>
 
-            <footer class="footer">
+            <footer class="footer" align="center">
                 <p>&copy; 2016 Satlab ApS - Released under the MIT license</p>
             </footer>
         </div>
