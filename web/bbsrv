@@ -23,20 +23,18 @@
 from __future__ import print_function, division
 
 import sys
-import math
-import threading
+sys.path.append('..')
+
 import argparse
-import datetime
-import time
-import codecs
+import configparser
 import json
 
 import bottle
-import ephem
 
-sys.path.append('..')
-import bluebox
-import fec
+from tracker import Tracker
+from receiver import Receiver
+
+from bluebox import Bluebox
 
 # AJAX calls
 @bottle.route('/bb/info')
@@ -76,136 +74,21 @@ def js(filename):
 def js(filename):
     return bottle.static_file(filename, root='fonts')
 
-# Background threads
-class Receiver(threading.Thread):
-    def __init__(self, bb, packetlog):
-        # Setup parameters
-        self.bb = bb
-        self.packetlog = open(packetlog, 'a')
-
-        # Packet list
-        self._packets = []
-
-        # Start thread
-        threading.Thread.__init__(self, None)
-        self.start()
-
-    def run(self):
-        count = 0
-        ph = fec.PacketHandler()
-
-        while True:
-            bit_corr = 0
-            byte_corr = 0
-            data, rssi, freq = self.bb.receive(100)
-            if data is None:
-                continue
-
-            try:
-                data, bit_corr, byte_corr = ph.deframe(data)
-            except:
-                byte_corr = -1
-
-            print("{0:03} {1:.2f} RX ({2:03d}/{3:03d}) {4:4} dBm {5:+5d} Hz ({6:03}) '{7}'".format(
-                count, time.time(), bit_corr, byte_corr, rssi, freq, len(data), codecs.encode(data, "hex")))
-
-            # Append to packet list
-            self._packets.append({
-                'count': count,
-                'time': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                'rssi': rssi,
-                'freq': freq,
-                'bitcorr': bit_corr,
-                'bytecorr': byte_corr,
-                #'data': codecs.encode(data, "hex"),
-                'datalen': len(data)
-                })
-            count += 1
-
-    def packets(self, start):
-        # return packets from next, up to the last 10
-        return self._packets[start:][-10:]
-
-class Tracker(threading.Thread):
-    def __init__(self, bb, spacecraft, frequency):
-        # FIXME: add TLE downloader
-        tle = [
-            'GOMX 1                  ',
-            '1 39430U 13066Q   16109.36557205  .00000570  00000-0  11404-3 0  9990',
-            '2 39430  97.6740 134.8460 0151329 304.7268  53.9764 14.58545748128007']
-
-        # Setup parameters
-        self.bb = bb
-        self.spacecraft = tle[0].strip()
-        self.frequency = frequency
-
-        # Setup observer
-        self.obs = ephem.Observer()
-        self.obs.lat = '57.0138' # FIXME
-        self.obs.long = '9.9875' # FIXME
-
-        # Setup spacecraft
-        self.sc = ephem.readtle(tle[0], tle[1], tle[2])
-
-        # Start thread
-        threading.Thread.__init__(self, None)
-        self.start()
-
-    def pass_info(self):
-        delta_start = ephem.localtime(self.tr) - datetime.datetime.now()
-        delta_end = ephem.localtime(self.ts) - datetime.datetime.now()
-        max_alt = math.degrees(self.altt)
-
-        return {'spacecraft': self.spacecraft,
-                'frequency': self.current_freq,
-                'az': round(math.degrees(self.sc.az), 2),
-                'elv': round(math.degrees(self.sc.alt), 2),
-                'range': self.sc.range,
-                'range_velocity': self.sc.range_velocity,
-                'pass_ends': str(datetime.timedelta(delta_end.days, delta_end.seconds)),
-                'next_pass_in': str(datetime.timedelta(delta_start.days, delta_start.seconds)),
-                'next_pass_length': str(ephem.localtime(self.ts) - ephem.localtime(self.tr)),
-                'next_pass_elv': round(max_alt, 2)}
-
-    def doppler_shift(self, frequency, velocity):
-        c = 299792458.0
-        return (-velocity * frequency) / c
-
-    def run(self):
-        while True:
-            # Find next pass
-            self.obs.date = ephem.now()
-            self.tr, self.azr, self.tt, self.altt, self.ts, self.azs = self.obs.next_pass(self.sc)
-
-            # Handle pass
-            self.obs.date = ephem.now()
-            while self.obs.date <= self.ts:
-                # Calculate spacecraft position
-                self.sc.compute(self.obs)
-
-                # Adjust radio frequency
-                self.current_freq = self.frequency
-                if self.sc.alt >= 0.0:
-                    self.current_freq += self.doppler_shift(self.frequency, self.sc.range_velocity)
-                self.bb.set_frequency(int(self.current_freq))
-
-                # Wait for next update
-                self.obs.date = ephem.Date(self.obs.date + 2 * ephem.second)
-                time.sleep(2)
-
 def main():
     # Parse optional arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("-p", metavar="<port>", dest="port", default=8080, type=int, help="webserver listen port")
-    parser.add_argument("-l", metavar="<host>", dest="host", default='localhost', help="webserver listen host")
-    parser.add_argument("-i", metavar="<index>", dest="index", default=None, type=int, help="select specific BlueBox device at index")
-    parser.add_argument("-s", metavar="<serial>", dest="serialnum", default=None, help="select specific BlueBox device with serial")
-    parser.add_argument("-t", metavar="<spacecraft>", dest="spacecraft", default="AAUSAT4", help="Spacecraft to track")
+    parser.add_argument("-c", metavar="<conf>", dest="conf",
+                        default="default.conf", help="config file")
     args = parser.parse_args()
+
+    # Parse config file
+    conf = configparser.ConfigParser()
+    conf.read(args.conf)
 
     # Connect to BlueBox
     try:
-        bb = bluebox.Bluebox(index=args.index, serial=args.serialnum)
+        bb = Bluebox(index=conf['bluebox'].getint('index'),
+                     serial=conf['bluebox'].get('serial'))
     except Exception as e:
         print("Failed to connect to BlueBox: {0}".format(e))
         sys.exit(0)
@@ -216,11 +99,16 @@ def main():
 
     # Start tracking thread
     global tracker
-    tracker = Tracker(bb, args.spacecraft, 437425000)
+    tracker = Tracker(bb,
+                      conf['groundstation'].getfloat('lat'),
+                      conf['groundstation'].getfloat('lon'),
+                      conf['spacecraft'].getint('frequency'))
 
     # Start server
-    print('Listening on http://{}:{}'.format(args.host, args.port))
-    bottle.run(host=args.host, port=args.port, quiet=True)
+    host = conf['server'].get('host')
+    port = conf['server'].get('port')
+    print('Listening on http://{}:{}'.format(host, port))
+    bottle.run(host=host, port=port, quiet=True)
 
 if __name__ == '__main__':
     main()

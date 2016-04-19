@@ -45,12 +45,16 @@ var get_tracking = function ()
 next_packet = 0;
 var get_packets = function ()
 {
-    // request RSSI from bluebox
     $.ajax({
         url: '/packets/' + next_packet,
         success: function(data) {
             data.packets.forEach(function(entry) {
                 $("#wait-data").hide();
+                if (entry.beacon) {
+                    type = "Beacon";
+                } else {
+                    type = "Command";
+                }
                 $("#packets tbody").prepend($(
                     "<tr>" +
                         "<td>" + entry.count + "</td>" +
@@ -58,19 +62,31 @@ var get_packets = function ()
                         "<td>" + entry.rssi + " dBm</td>" +
                         "<td>" + entry.freq + " Hz</td>" +
                         "<td>" + entry.bitcorr + "/" + entry.bytecorr + "</td>" +
+                        "<td>" + entry.datalen + "</td>" +
+                        "<td>" + type + "</td>" +
                     "</tr>").hide().fadeIn(500));
+
+                // parse beacon
+                if (entry.beacon) {
+                    if (entry.beacon.eps) {
+
+                    }
+                    if (entry.beacon.com) {
+
+                    }
+                }
 
                 next_packet = entry.count + 1;
             });
         }
     });
 
-    setTimeout(get_packets, 200);
+    setTimeout(get_packets, 250);
 }
 
 var main = function ()
 {
-    // get info
+    // get bluebox info
     get_bbinfo();
 
     // start tracking update
