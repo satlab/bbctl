@@ -19,24 +19,12 @@
                 <h3 class="sub-header">Tracking</h3>
 
                 <table class="table table-condensed">
-                    <tr>
-                        <td class="col-md-1">Spacecraft:</td><td class="col-md-2" id="spacecraft"/>
-                    </tr>
-                    <tr>
-                        <td class="col-md-1">Status: </td><td class="col-md-2" id="pass"/>
-                    </tr>
-                    <tr>
-                        <td class="col-md-1">Frequency:</td><td class="col-md-2" id="freq"/>
-                    </tr>
-                    <tr>
-                        <td class="col-md-1">Azimuth:</td><td class="col-md-2" id="az"/>
-                    </tr>
-                    <tr>
-                        <td class="col-md-1">Elevation:</td><td class="col-md-2" id="el"/>
-                    </tr>
-                    <tr>
-                        <td class="col-md-1">Slant range:</td><td class="col-md-2" id="slantrange"/>
-                    </tr>
+                    <tr><td class="col-md-1">Spacecraft:</td><td class="col-md-2" id="spacecraft"/></tr>
+                    <tr><td class="col-md-1">Status: </td><td class="col-md-2" id="pass"/></tr>
+                    <tr><td class="col-md-1">Frequency:</td><td class="col-md-2" id="freq"/></tr>
+                    <tr><td class="col-md-1">Azimuth:</td><td class="col-md-2" id="az"/></tr>
+                    <tr><td class="col-md-1">Elevation:</td><td class="col-md-2" id="el"/></tr>
+                    <tr><td class="col-md-1">Slant range:</td><td class="col-md-2" id="slantrange"/></tr>
                 </table>
             </div>
 
@@ -44,29 +32,48 @@
                 <h3 class="sub-header">Beacon</h3>
 
                 <div class="valid">
-                    <h4 style="display: inline;"><span class="label label-default">EPS</span></h4>
-                    <h4 style="display: inline;"><span class="label label-default">COM</span></h4>
-                    <h4 style="display: inline;"><span class="label label-default">ADCS1</span></h4>
-                    <h4 style="display: inline;"><span class="label label-default">ADCS2</span></h4>
-                    <h4 style="display: inline;"><span class="label label-default">AIS</span></h4>
+                    <h3 style="display: inline;"><span id="valid-eps" class="label label-default">EPS</span></h3>
+                    <h3 style="display: inline;"><span id="valid-com" class="label label-default">COM</span></h3>
+                    <h3 style="display: inline;"><span id="valid-adcs1" class="label label-default">ADCS1</span></h3>
+                    <h3 style="display: inline;"><span id="valid-adcs2" class="label label-default">ADCS2</span></h3>
+                    <h3 style="display: inline;"><span id="valid-ais" class="label label-default">AIS</span></h3>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-5">
-                        <table>
-                            <tr>
-                                <td><b>EPS</b></td></td>
-                            </tr>
-                            <tr>
-                                <td>Bat</td><td>1.0</td>
-                            </tr>
-                            <tr>
-                                <td>Sun</td><td>1.0</td>
-                            </tr>
-                        </table>
+                <div class="beacon-container">
+                    <div class="beacon-box">
+		    	<p class="beacon-header">EPS</p>
+			<p class="beacon-field">Boot count<span class="beacon-value"><span id="bcn-eps-bootcount">-</span></span></p>
+			<p class="beacon-field">Boot cause<span class="beacon-value"><span id="bcn-eps-bootcause">-</span></span></p>
+			<p class="beacon-field">Battery voltage<span class="beacon-value"><span id="bcn-eps-battvoltage">-</span> V</span></p>
+			<p class="beacon-field">Battery current<span class="beacon-value"><span id="bcn-eps-battcurrent">-</span> mA</span></p>
+			<p class="beacon-field">Main voltage<span class="beacon-value"><span id="bcn-eps-mainvoltage">-</span> V</span></p>
+			<p class="beacon-field">EPS temperature<span class="beacon-value"><span id="bcn-eps-temp-eps">-</span> &degC</span></p>
+			<p class="beacon-field">PA temperature<span class="beacon-value"><span id="bcn-eps-temp-pa">-</span> &degC</span></p>
+			<p class="beacon-field">uptime<span class="beacon-value"><span id="bcn-eps-uptime">-</span> s</span></p>
                     </div>
-                    <div class="col-md-5">
-                        <p><b>COM</b></p>
+                    <div class="beacon-box">
+		    	<p class="beacon-header">COM</p>
+			<p class="beacon-field">Boot count<span class="beacon-value"><span id="bcn-com-bootcount">-</span></span></p>
+			<p class="beacon-field">Boot cause<span class="beacon-value"><span id="bcn-com-bootcause">-</span></span></p>
+			<p class="beacon-field">Received<span class="beacon-value"><span id="bcn-com-rx">-</span></span></p>
+			<p class="beacon-field">Transmitted<span class="beacon-value"><span id="bcn-com-tx">-</span></span></p>
+			<p class="beacon-field">Last RSSI<span class="beacon-value"><span id="bcn-com-rssi">-</span> dBm</span></p>
+			<p class="beacon-field">Last FEC<span class="beacon-value"><span id="bcn-com-fec">-</span></span></p>
+                    </div>
+                    <div class="beacon-box">
+		    	<p class="beacon-header">ADCS</p>
+			<p class="beacon-field">B-dot<span class="beacon-value"><span id="bcn-adcs1-bdot">-</span></span></p>
+			<p class="beacon-field">State<span class="beacon-value"><span id="bcn-adcs1-state">-</span></span></p>
+			<p class="beacon-field">Gyro<span class="beacon-value"><span id="bcn-adcs2-gyro">-</span></span></p>
+                    </div>
+                    <div class="beacon-box">
+		    	<p class="beacon-header">AIS</p>
+			<p class="beacon-field">Boot count<span class="beacon-value"><span id="bcn-ais-bootcount">-</span></span></p>
+			<p class="beacon-field">CRC OK<span class="beacon-value"><span id="bcn-ais-crcok">-</span></span></p>
+			<p class="beacon-field">Last latitude<span class="beacon-value"><span id="bcn-ais-lat">-</span></span></p>
+			<p class="beacon-field">Last longitude<span class="beacon-value"><span id="bcn-ais-long">-</span></span></p>
+			<p class="beacon-field">Last MMSI<span class="beacon-value"><span id="bcn-ais-mmsi">-</span></span></p>
+			<p class="beacon-field">Unique MMSI<span class="beacon-value"><span id="bcn-ais-unique">-</span></span></p>
                     </div>
                 </div>
             </div>

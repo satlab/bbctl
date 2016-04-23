@@ -24,6 +24,7 @@ import threading
 import time
 import codecs
 import datetime
+import json
 
 from fec import PacketHandler
 from beacon import Beacon
@@ -78,6 +79,8 @@ class Receiver(threading.Thread):
                 packet['beacon'] = bcn.fields()
             except Exception as e:
                 pass
+    
+            print(json.dumps(packet, sort_keys=True, indent=4))
 
             # Append to packet list
             self._packets.append(packet)
