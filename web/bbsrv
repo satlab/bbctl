@@ -43,7 +43,7 @@ def bb_info():
             'product': receiver.bb.product,
             'bus': receiver.bb.dev.bus,
             'address': receiver.bb.dev.address,
-            'serial': receiver.bb.get_serialnumber(),
+            'serial': "{:08x}".format(receiver.bb.get_serialnumber()),
             'fwrevision': receiver.bb.get_fwrevision()}
 
 @bottle.route('/tracker')

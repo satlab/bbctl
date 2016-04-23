@@ -73,7 +73,8 @@ class Receiver(threading.Thread):
 
             # Try to parse as beacon
             try:
-                bcn = Beacon(data)
+                # Drop 2 byte HMAC
+                bcn = Beacon(data[:-2])
                 packet['beacon'] = bcn.fields()
             except Exception as e:
                 pass
