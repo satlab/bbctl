@@ -418,10 +418,10 @@ def csma(args, bb):
         print(bb.get_csma())
 
 @subcommand("get or set device sync word")
-@argument('syncword', type=int, help="sync word. Only ", nargs="?", default=None)
+@argument('syncword', help="sync word. Only ", nargs="?", default=None)
 def syncword(args, bb):
     if args.syncword is not None:
-        bb.set_syncword(args.syncword)
+        bb.set_syncword(int(args.syncword, 16))
     else:
         print("{:06x}".format(bb.get_syncword()))
 
@@ -523,6 +523,7 @@ def list(args):
              "   Frequency: {} Hz\n" + \
              "   Modindex:  {}\n" + \
              "   Bitrate:   {} bps\n" + \
+             "   Syncword:  {:x}\n" + \
              "   Power:     {}\n" + \
              "   Training:  {} ms\n" + \
              "   Transmit:  {}\n" + \
@@ -542,6 +543,7 @@ def list(args):
                 bb.get_frequency(),
                 bb.get_modindex(),
                 bb.get_bitrate(),
+                bb.get_syncword(),
                 bb.get_power(),
                 bb.get_training(),
                 bb.get_transmitted(),
