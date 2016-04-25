@@ -39,12 +39,7 @@ from bluebox import Bluebox
 # AJAX calls
 @bottle.route('/bb/info')
 def bb_info():
-    return {'manufacturer': receiver.bb.manufacturer,
-            'product': receiver.bb.product,
-            'bus': receiver.bb.dev.bus,
-            'address': receiver.bb.dev.address,
-            'serial': "{:08x}".format(receiver.bb.get_serialnumber()),
-            'fwrevision': receiver.bb.get_fwrevision()}
+    return receiver.info()
 
 @bottle.route('/tracker')
 def passinfo():
@@ -95,14 +90,18 @@ def main():
 
     # Start receiver thread
     global receiver
-    receiver = Receiver(bb, 'packets.json')
+    receiver = Receiver(bb, 'packets.json',
+                        conf['spacecraft'].getint('bitrate'),
+                        conf['spacecraft'].getint('modindex'),
+                        int(conf['spacecraft'].get('syncword'), 16))
 
     # Start tracking thread
     global tracker
     tracker = Tracker(bb,
                       conf['groundstation'].getfloat('lat'),
                       conf['groundstation'].getfloat('lon'),
-                      conf['spacecraft'].getint('frequency'))
+                      conf['spacecraft'].getint('frequency'),
+                      conf['spacecraft'].get('tle'))
 
     # Start server
     host = conf['server'].get('host')

@@ -28,12 +28,10 @@ import time
 import ephem
 
 class Tracker(threading.Thread):
-    def __init__(self, bb, lat, lon, frequency, tle=None):
-        # FIXME: add TLE downloader
-        tle = [
-            'GOMX 1                  ',
-            '1 39430U 13066Q   16109.36557205  .00000570  00000-0  11404-3 0  9990',
-            '2 39430  97.6740 134.8460 0151329 304.7268  53.9764 14.58545748128007']
+    def __init__(self, bb, lat, lon, frequency, tle):
+
+        # Split TLE
+        tle = [x.strip() for x in tle.split(',')]
 
         # Setup parameters
         self.bb = bb

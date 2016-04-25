@@ -39,6 +39,10 @@ body {
     text-align: center;
 }
 
+.beacon-valid {
+    display: inline;
+}
+
 .beacon-container {
     position: relative;
     text-align: center;

@@ -23,9 +23,6 @@
 import codecs
 import struct
 
-class NotBeaconException(Exception):
-    pass
-
 class Beacon():
     BEACON_LENGTH = 84
     BEACON_DEST = 9
@@ -50,10 +47,10 @@ class Beacon():
         dport = (header >> 14) & 0x3f
 
         if dst != self.BEACON_DEST or dport != self.BEACON_DPORT:
-            raise NotBeaconException("Beacon destination does not match")
+            raise TypeError("Beacon destination does not match")
 
         if len(bdata) != self.BEACON_LENGTH:
-            raise NotBeaconException("Length does not match beacon")
+            raise TypeError("Length does not match beacon")
 
         # Initialize beacon dictionary
         self.beacon = {}

@@ -30,10 +30,15 @@ from fec import PacketHandler
 from beacon import Beacon
 
 class Receiver(threading.Thread):
-    def __init__(self, bb, packetlog):
+    def __init__(self, bb, packetlog, bitrate, modindex, syncword):
         # Setup parameters
         self.bb = bb
         self.packetlog = open(packetlog, 'a')
+
+        # Setup bluebox
+        self.bb.set_bitrate(bitrate)
+        self.bb.set_modindex(modindex)
+        self.bb.set_syncword(syncword)
 
         # Packet list
         self._packets = []
@@ -77,14 +82,23 @@ class Receiver(threading.Thread):
                 # Drop 2 byte HMAC
                 bcn = Beacon(data[:-2])
                 packet['beacon'] = bcn.fields()
-            except Exception as e:
+            except TypeError:
                 pass
     
+            # Dump packet as JSON
             print(json.dumps(packet, sort_keys=True, indent=4))
 
             # Append to packet list
             self._packets.append(packet)
             count += 1
+
+    def info(self):
+        return {'manufacturer': self.bb.manufacturer,
+                'product': self.bb.product,
+                'bus': self.bb.dev.bus,
+                'address': self.bb.dev.address,
+                'serial': "{:08x}".format(self.bb.get_serialnumber()),
+                'fwrevision': self.bb.get_fwrevision()}
 
     def packets(self, start):
         # return packets from next, up to the last 10
