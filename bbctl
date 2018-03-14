@@ -390,6 +390,13 @@ def modindex(args, bb):
     else:
         print(bb.get_modindex())
 
+@subcommand("get or set device IF bandwidth")
+@argument('ifbw', type=int, help="requested IF bandwidth", nargs="?", default=None)
+def ifbw(args, bb):
+    if args.ifbw is not None:
+        bb.set_ifbw(args.ifbw)
+    else:
+        print(bb.get_ifbw())
 
 @subcommand("get or set device training sequence")
 @argument('length', type=int, help="training sequence length in ms", nargs="?", default=None)
@@ -522,6 +529,7 @@ def list(args):
              "   Firmware:  {}\n" + \
              "   Frequency: {} Hz\n" + \
              "   Modindex:  {}\n" + \
+             "   IF BW:     {}\n" + \
              "   Bitrate:   {} bps\n" + \
              "   Syncword:  {:x}\n" + \
              "   Power:     {}\n" + \
@@ -542,6 +550,7 @@ def list(args):
                 bb.get_fwrevision(),
                 bb.get_frequency(),
                 bb.get_modindex(),
+                bb.get_ifbw(),
                 bb.get_bitrate(),
                 bb.get_syncword(),
                 bb.get_power(),
